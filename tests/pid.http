@@ -1,0 +1,8 @@
+/*
+# PID/MDL/RTU endpoints
+*/
+# @import ./assertion.http
+# @ref assertion
+
+POST {{baseUrl}}/1.0/pid
+Authorization: Bearer {{assertion.wallet_attestations[0].wallet_attestation}}

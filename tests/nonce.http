@@ -1,0 +1,7 @@
+/*
+# Nonce methods
+
+Allows to request nonce from server
+*/
+POST {{baseUrl}}/nonce
+Content-Type: application/json

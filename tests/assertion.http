@@ -1,0 +1,124 @@
+/*
+# Assertion
+*/
+/*
+## Token structure
+
+### Header
+
+```json
+{
+  "alg": "ES256",
+  "typ": "var+jwt",
+  "kid": "5RZFt5xRDoFXBZEc+pM9aDT7p2kW0VkSWdY4JHyUcG4="
+}
+```
+
+### Body
+
+```json
+{
+  "sub": "https://localhost:44380",
+  "iss": "https://localhost:44380/instance/5RZFt5xRDoFXBZEc+pM9aDT7p2kW0VkSWdY4JHyUcG4=",
+  "type": "WalletInstanceAttestationRequest",
+  "hardware_key_tag": "VlRvcRr7Jtj9/6qGcN9TMrbRsKioedvihj67Q0Kxlmg=",
+  "cnf": {
+    "jwk": {
+      "crv": "P-256",
+      "kty": "EC",
+      "x": "4HNptI-xr2pjyRJKGMnz4WmdnQD_uJSq4R95Nj98b44",
+      "y": "LIZnSB39vFJhYgS3k7jXE4r3-CoGFQwZtPBIRqpNlrg"
+    }
+  },
+  "iat": 1742401921,
+  "exp": 1742411921
+}
+```
+
+### Test key
+
+```pem
+-----BEGIN PUBLIC KEY-----
+MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEEVs/o5+uQbTjL3chynL4wXgUg2R9
+q9UU8I5mEovUf86QZ7kOBIjJwqnzD1omageEHWwHdBO6B+dFabmdT9POxg==
+-----END PUBLIC KEY-----
+-----BEGIN PRIVATE KEY-----
+MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgevZzL1gdAFr88hb2
+OF/2NxApJCzGCEDdfSp6VQO30hyhRANCAAQRWz+jn65BtOMvdyHKcvjBeBSDZH2r
+1RTwjmYSi9R/zpBnuQ4EiMnCqfMPWiZqB4QdbAd0E7oH50VpuZ1P087G
+-----END PRIVATE KEY-----
+```
+*/
+/*
+## Request assertion token
+*/
+# @name assertion
+
+{{
+  const crypto = require('crypto');
+
+  const privateKey = `MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgevZzL1gdAFr88hb2OF/2NxApJCzGCEDdfSp6VQO30hyhRANCAAQRWz+jn65BtOMvdyHKcvjBeBSDZH2r1RTwjmYSi9R/zpBnuQ4EiMnCqfMPWiZqB4QdbAd0E7oH50VpuZ1P087G`;
+
+  const header = {
+    "alg": "ES256",
+    "typ": "var+jwt",
+    "kid": "5RZFt5xRDoFXBZEc+pM9aDT7p2kW0VkSWdY4JHyUcG4=",
+  };
+
+  const iat = Math.floor(Date.now() / 1000);
+
+  const payload = {
+    "sub": baseUrl,
+    "iss": baseUrl + "/instance/5RZFt5xRDoFXBZEc+pM9aDT7p2kW0VkSWdY4JHyUcG4=",
+    "type": "WalletInstanceAttestationRequest",
+    "hardware_key_tag": "VlRvcRr7Jtj9/6qGcN9TMrbRsKioedvihj67Q0Kxlmg=",
+    "cnf": {
+      "jwk": {
+        "crv": "P-256",
+        "kty": "EC",
+        "x": "4HNptI-xr2pjyRJKGMnz4WmdnQD_uJSq4R95Nj98b44",
+        "y": "LIZnSB39vFJhYgS3k7jXE4r3-CoGFQwZtPBIRqpNlrg"
+      }
+    },
+    "iat": iat,
+    "nbf": iat,
+    "exp": iat + 3600,
+  };
+
+  const base64UrlEncode = (str) => {
+    return str
+      .toString('base64')
+      .replace(/=/g, '')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_');
+  };
+
+  const priv = await crypto.subtle.importKey(
+    'pkcs8',
+    Buffer.from(privateKey, 'base64'),
+    {
+      name: 'ECDSA',
+      namedCurve: 'P-256'
+    },
+    false,
+    ['sign']
+  )
+
+  const tok = `${base64UrlEncode(Buffer.from(JSON.stringify(header)))}.${base64UrlEncode(Buffer.from(JSON.stringify(payload)))}`;
+
+  const signature = await crypto.subtle.sign(
+    {
+      name: "ECDSA",
+      hash: { name: "SHA-256" },
+    },
+    priv,
+    Buffer.from(tok)
+  );
+
+  exports.assertion = `${tok}.${base64UrlEncode(Buffer.from(signature))}`;
+}}
+
+POST {{baseUrl}}/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion={{assertion}}

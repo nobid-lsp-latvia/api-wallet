@@ -1,0 +1,50 @@
+issues:
+  exclude-files:
+    - ".*_test\\.go$"
+  exclude:
+    - "the type name `ErrorResponse` should conform to the `XxxError` format"
+  exclude-rules:
+    - path: openid4vci/
+      linters:
+        - tagliatelle # for OpenID specification json naming
+
+linters-settings:
+  gci:
+    custom-order: true
+    sections:
+      - standard
+      - prefix(git.zzdats.lv/edim/api-wallet)
+      - default
+
+linters:
+  presets:
+    - comment
+    - format
+    - bugs
+    - performance
+    - unused
+    - test
+    - sql
+    - style
+
+  enable:
+    - wsl
+
+  disable:
+    - godox
+    - tagalign
+    - exhaustruct
+    - depguard
+    - wrapcheck
+    - gochecknoinits
+    - varnamelen
+    - funlen
+    - ireturn
+    - mnd
+    - interfacebloat
+    - gochecknoglobals
+    - err113
+    - lll
+    - nilnil
+    - containedctx
+    - dupword # for swagger docs
